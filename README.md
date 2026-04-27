@@ -1,85 +1,174 @@
 # Open-World Object Detection with Multi-Modal MEPU
 
-This repository provides the enhanced Open-World Object Detection (OWOD) codebase built upon the Multi-modal Evidence Per-Unknown (MEPU) framework. Our core contribution tackles the challenging task of discriminating unknown objects from both the background and known categories by leveraging visual-linguistic multi-modal features and establishing mathematically grounded uncertainty estimation models.
-
-## Key Features
-
-1. **Multi-Modal Feature Fusion**: Integrates powerful vision-language model (CLIP) semantic features alongside robust visual features, addressing representation biases towards known classes.
-2. **Weibull-Based Uncertainty Estimation**: Implements theoretically justified Weibull mixture modeling for accurate pseudo-labeling, estimating the epistemic and aleatoric uncertainty involved in discovering "unknown" object candidates.
-3. **Advanced Pseudo-Labeling Pipeline**: Re-engineered iterative pseudo-labeling logic filtering out noise with strict uncertainty thresholds and an active-learning budget.
-
-### Core File Structure
-- `mepu/model/rew/multimodal_rew.py` & `fusion.py`: Our multi-modal fusion architecture.
-- `mepu/model/uncertainty_estimator.py`: Formal framework for Weibull-based uncertainty modeling.
-- `tools/gen_pseudo_label_uncertainty.py`: Uncertainty-aware pseudo-label generator.
-- `tools/estimate_uncertainty.py`: Modular uncertainty estimator using MC-Dropout strategies.
-- `script/train_multimodal_mepu_t1.sh`: Standardized multi-step end-to-end training and inference script for the Multi-Modal MEPU model.
+> **MEPU-OWOD** is a research framework for **Open-World Object Detection (OWOD)** that can detect both *known* and *unknown* objects — even objects the model has never seen during training.
 
 ---
 
-## Installation & Prerequisites
+## What Is This Project?
 
-1. **Environment Setup**:
-   ```bash
-   conda create -n mepu-multimodal python=3.8
-   conda activate mepu-multimodal
-   conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=10.2 -c pytorch
-   ```
-2. **Install Detectron2**:
-   ```bash
-   git clone https://github.com/facebookresearch/detectron2.git
-   cd detectron2
-   pip install -e .
-   cd ..
-   ```
-3. **Install Multi-Modal Tools & Dependencies**:
-   ```bash
-   pip install ftfy regex
-   pip install git+https://github.com/openai/CLIP.git
-   pip install -r requirements.txt
-   ```
+Traditional object detectors only recognize categories they were trained on. When they see an unfamiliar object, they either miss it or wrongly classify it as background. **Open-World Object Detection** solves this by teaching the model to also flag objects it doesn't recognize.
+
+This project extends the **MEPU** (Multi-modal Evidence Per-Unknown) framework by adding:
+
+| Enhancement | Description |
+|---|---|
+| **Multi-Modal Fusion** | Combines visual features (ResNet) with language features (CLIP) for richer object representations |
+| **Weibull Uncertainty Modeling** | Uses statistical Weibull distributions to estimate how confident the model is about unknown object candidates |
+| **Uncertainty-Aware Pseudo-Labeling** | Automatically generates training labels for unknown objects, filtered by quality and confidence |
+
+---
+
+## Key Files at a Glance
+
+```
+mepu-owod/
+│
+├── mepu/model/
+│   ├── rew/
+│   │   ├── multimodal_rew.py       # Multi-modal fusion model (CLIP + ResNet)
+│   │   └── fusion.py               # Feature fusion strategies (attention, gating, concat)
+│   └── uncertainty_estimator.py    # Weibull-based uncertainty estimation
+│
+├── tools/
+│   ├── gen_pseudo_label_new.py         # Step 1: Generate initial pseudo-labels (FreeSOLO)
+│   ├── gen_pseudo_label_uncertainty.py # Step 5: Filter labels using uncertainty scores
+│   └── estimate_uncertainty.py         # Step 4: MC-Dropout uncertainty estimation
+│
+├── script/
+│   └── train_multimodal_mepu_t1.sh     # Main end-to-end training script (Task 1)
+│
+├── config/                             # YAML config files for training & evaluation
+├── datasets/                           # Dataset files (COCO / S-OWOD)
+├── models/                             # Pre-trained model weights
+├── proposals/                          # FreeSOLO region proposals
+└── train_net.py                        # Main training/evaluation entry point
+```
+
+---
+
+## Installation
+
+Follow these steps in order. This project requires a Linux/Mac environment or WSL on Windows.
+
+### Step 1 — Create a Conda Environment
+
+```bash
+conda create -n mepu-multimodal python=3.8
+conda activate mepu-multimodal
+```
+
+### Step 2 — Install PyTorch (with CUDA support)
+
+```bash
+conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=10.2 -c pytorch
+```
+
+> **Requirements:** CUDA 10.2 or higher, GPU with at least 8 GB VRAM recommended.
+
+### Step 3 — Install Detectron2
+
+Detectron2 is Facebook's object detection library that this project is built on top of.
+
+```bash
+git clone https://github.com/facebookresearch/detectron2.git
+cd detectron2
+pip install -e .
+cd ..
+```
+
+### Step 4 — Install CLIP
+
+CLIP (Contrastive Language-Image Pretraining) provides the semantic language features used in multi-modal fusion.
+
+```bash
+pip install ftfy regex
+pip install git+https://github.com/openai/CLIP.git
+```
+
+### Step 5 — Install Remaining Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
 
 ## Dataset Preparation
 
-This project operates on the Microsoft COCO benchmark adapted for S-OWOD (Open World Object Detection). Please structure your MS COCO download according to the following layout:
+This project uses **MS COCO** data reorganized into the **S-OWOD** (Superclass Open World Object Detection) benchmark format.
 
-```text
+### 1. Download MS COCO
+
+Download the COCO 2017 dataset from [cocodataset.org](https://cocodataset.org/#download) and organize it as shown below:
+
+```
 mepu-owod/
 └── datasets/
     └── coco/
-        ├── annotations/
-        ├── train2017/
-        └── val2017/
+        ├── annotations/    ← JSON annotation files
+        ├── train2017/      ← Training images
+        └── val2017/        ← Validation images
 ```
 
-Then generate the S-OWOD subsets:
+### 2. Generate S-OWOD Subsets
+
+Run the preparation script to convert COCO into the task-split format used for open-world evaluation:
+
 ```bash
 python prepare_dataset.py
 ```
 
-## Quick Start & Usage
+This will create the S-OWOD annotation files under `datasets/sowod/Annotations/`.
 
-We provide a comprehensive multi-step script that takes you systematically through initial pseudo-label generation, Weibull probability updates, multi-modal feature fusion, uncertainty filtering, and final detector training.
+---
 
-### Train Multi-Modal MEPU on Task 1
+## Download Pre-trained Models
 
-The principal entry point for replicating our evaluation loop on Task 1 is:
+Download the following files from [Google Drive](https://drive.google.com/drive/folders/1AhFY-aH-ewwukEFlA3QsE5tjGR3lw1j4) and place them in the correct locations:
+
+| File | Save Location | Purpose |
+|------|--------------|---------|
+| `soco_backbone.pth` | `models/soco_backbone.pth` | SoCo pre-trained backbone |
+| `model_final.pth` | `training_dir/rew/model_final.pth` | Pre-trained REW model |
+| `proposals_freesolo.json` | `proposals/proposals_freesolo.json` | FreeSOLO region proposals |
+
+---
+
+## Training (Task 1)
+
+Once setup is complete, run the full multi-stage training pipeline with a single command:
 
 ```bash
+conda activate mepu-multimodal
 bash script/train_multimodal_mepu_t1.sh
 ```
 
-**What this script does:**
-1. Generates initial pseudo-labels for unknown proposals via FreeSOLO.
-2. Updates and distills the Reconstruction Error-based Weibull (REW) models utilizing baseline known instances.
-3. Automatically computes comprehensive MULTI-MODAL REW scores (merging CLIP textual semantics and ResNet visual feature maps).
-4. Estimates epistemic prediction uncertainty by running MC-Dropout sampling.
-5. Performs rigorous intersection/quality/uncertainty checking to generate filtered, high-quality pseudo-labels for training.
-6. Self-trains the detection pipeline on standard OWOD evaluation tasks using the verified high-confidence proposals.
+### What Happens Inside the Script
 
-### Evaluation
+The script runs **12 sequential steps** automatically:
 
-To evaluate an established Multimodal MEPU model state on standard Validation bounds (e.g., Task 1 metrics):
+| Step | What It Does |
+|------|-------------|
+| **1** | Generate initial unknown-object proposals using **FreeSOLO** |
+| **2** | Update **Weibull (REW)** models using known-category training images |
+| **3** | Extract **multi-modal REW scores** (CLIP language + ResNet visual) |
+| **4** | Estimate prediction **uncertainty** via MC-Dropout sampling |
+| **5** | Filter proposals and generate **high-quality pseudo-labels** |
+| **6** | Train the detector using known objects + filtered pseudo-labels |
+| **7** | **Self-training**: Run OLN inference on training set to refine proposals |
+| **8** | Re-generate pseudo-labels from the self-trained model |
+| **9** | Re-compute REW scores for the refined proposals |
+| **10** | Re-estimate uncertainty for the refined proposals |
+| **11** | Filter refined proposals with uncertainty thresholds |
+| **12** | Final training with the refined pseudo-labels |
+
+> The final model is saved to: `training_dir/multimodal-mepu/sowod-t1-final/model_final.pth`
+
+---
+
+## Evaluation
+
+To evaluate a trained model on the Task 1 validation set:
 
 ```bash
 python train_net.py \
@@ -90,4 +179,77 @@ python train_net.py \
     DATASETS.TEST '("sowod_val_t1",)'
 ```
 
-*Note: Visualized inference outputs and theoretical proofs corresponding to this pipeline are detailed thoroughly within the method's paper documentation and the `methodology.tex` source file.*
+The evaluation reports standard OWOD metrics including **Known AP**, **Unknown Recall (U-Recall)**, and **Wilderness Impact (WI)**.
+
+---
+
+## Configuration Reference
+
+Key configuration parameters (set in YAML files under `config/`):
+
+### Multi-Modal Settings
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `MULTIMODAL.CLIP_MODEL` | `ViT-B/32` | CLIP backbone (`ViT-B/32`, `ViT-L/14`, `RN50`) |
+| `MULTIMODAL.FUSION_TYPE` | `attention` | How visual and semantic features are merged |
+| `MULTIMODAL.VISUAL_WEIGHT` | `0.6` | Weight given to visual (ResNet) REW scores |
+| `MULTIMODAL.SEMANTIC_WEIGHT` | `0.4` | Weight given to semantic (CLIP) REW scores |
+
+### Uncertainty Settings
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `UNCERTAINTY.MC_SAMPLES` | `10` | Number of MC-Dropout forward passes |
+| `UNCERTAINTY.THRESHOLD` | `0.3` | Maximum uncertainty to accept a proposal |
+| `UNCERTAINTY.CALIBRATION` | `temperature` | Calibration method (`temperature`, `platt`, `none`) |
+
+### Pseudo-Label Settings
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `PSEUDO_LABEL.UNCERTAINTY_THRESHOLD` | `0.3` | Reject proposals with uncertainty above this |
+| `PSEUDO_LABEL.QUALITY_THRESHOLD` | `0.5` | Reject proposals with quality score below this |
+| `PSEUDO_LABEL.ACTIVE_LEARNING_BUDGET` | `1000` | Number of uncertain samples to query per round |
+
+---
+
+## Troubleshooting
+
+### CLIP import fails
+
+```bash
+pip install ftfy regex
+pip install git+https://github.com/openai/CLIP.git
+```
+
+### CUDA Out of Memory
+
+Reduce the batch size in your config YAML:
+
+```yaml
+SOLVER:
+  IMS_PER_BATCH: 2   # Reduce from 4 to 2
+```
+
+### Training is too slow
+
+Try these speed-ups in your config:
+
+- Lower `UNCERTAINTY.MC_SAMPLES` from `10` → `5`
+- Use a lighter CLIP model: `RN50` instead of `ViT-L/14`
+- Pre-cache CLIP features offline to avoid recomputing them each epoch
+
+---
+
+## Extending to Tasks 2–4
+
+The S-OWOD benchmark has 4 incremental tasks. To train on Task 2, 3, or 4:
+
+1. Copy `script/train_multimodal_mepu_t1.sh` → e.g., `train_multimodal_mepu_t2.sh`
+2. Update the config path: `config/MEPU-SOWOD/t2/train_multimodal.yaml`
+3. Update dataset splits: `--data_split t2_train`, `DATASETS.TEST '("sowod_val_t2",)'`
+4. Update the output directory: `training_dir/multimodal-mepu/sowod-t2`
+
+---
+
+## License
+
+This project is built upon [MEPU](https://github.com/fredzzhang/mepu) and [Detectron2](https://github.com/facebookresearch/detectron2). Please refer to their respective licenses.
