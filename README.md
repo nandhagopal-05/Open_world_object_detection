@@ -239,6 +239,20 @@ Try these speed-ups in your config:
 
 ---
 
+## Results
+
+### FreeSOLO 
+
+<img src="E:\New folder\mepu-owod\output_T1\FreeSOLO\Figure_9.png" alt="FreeSOLO" width="50%">
+
+### Refined-pseudo-label 
+
+<img src="E:\New folder\mepu-owod\output_T1\Refined-pseudo-label\Figure_5.png" alt="Refined-pseudo-label" width="50%">
+
+### Weibull 
+
+<img src="E:\New folder\mepu-owod\output_T1\Weibull models of REW\T-1-Figure_5.png" alt="Weibull" width="50%">
+
 ## Extending to Tasks 2–4
 
 The S-OWOD benchmark has 4 incremental tasks. To train on Task 2, 3, or 4:
