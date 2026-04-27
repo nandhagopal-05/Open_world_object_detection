@@ -247,7 +247,7 @@ Try these speed-ups in your config:
 
 ### Refined-pseudo-label 
 
-<img src="output_T1\Refined-pseudo-label\Figure_5.png" alt="Refined-pseudo-label" width="50%">
+<img src="output_T1\Refined-pseudo-labels\Figure_5.png" alt="Refined-pseudo-label" width="50%">
 
 ### Weibull 
 
