@@ -1,6 +1,6 @@
 # Open-World Object Detection with Multi-Modal MEPU
 
-> **MEPU-OWOD** is a research framework for **Open-World Object Detection (OWOD)** that can detect both *known* and *unknown* objects — even objects the model has never seen during training.
+> **MEPU-OWOD** is a research framework for **Open-World Object Detection (OWOD)** that can detect both *known* and *unknown* objects - even objects the model has never seen during training.
 
 ---
 
@@ -50,14 +50,14 @@ mepu-owod/
 
 Follow these steps in order. This project requires a Linux/Mac environment or WSL on Windows.
 
-### Step 1 — Create a Conda Environment
+### Step 1 - Create a Conda Environment
 
 ```bash
 conda create -n mepu-multimodal python=3.8
 conda activate mepu-multimodal
 ```
 
-### Step 2 — Install PyTorch (with CUDA support)
+### Step 2 - Install PyTorch (with CUDA support)
 
 ```bash
 conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=10.2 -c pytorch
@@ -65,7 +65,7 @@ conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit
 
 > **Requirements:** CUDA 10.2 or higher, GPU with at least 8 GB VRAM recommended.
 
-### Step 3 — Install Detectron2
+### Step 3 - Install Detectron2
 
 Detectron2 is Facebook's object detection library that this project is built on top of.
 
@@ -76,7 +76,7 @@ pip install -e .
 cd ..
 ```
 
-### Step 4 — Install CLIP
+### Step 4 - Install CLIP
 
 CLIP (Contrastive Language-Image Pretraining) provides the semantic language features used in multi-modal fusion.
 
@@ -85,7 +85,7 @@ pip install ftfy regex
 pip install git+https://github.com/openai/CLIP.git
 ```
 
-### Step 5 — Install Remaining Dependencies
+### Step 5 - Install Remaining Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -253,7 +253,7 @@ Try these speed-ups in your config:
 
 <img src="output_T1\Weibull models of REW\T-1-Figure_5.png" alt="Weibull" width="50%">
 
-## Extending to Tasks 2–4
+## Extending to Tasks 2-4
 
 The S-OWOD benchmark has 4 incremental tasks. To train on Task 2, 3, or 4:
 
